@@ -22,7 +22,7 @@ class Ball(pygame.sprite.Sprite):
         self.pos.update(pos)
         self.rect.center = self.pos
 
-    def update(self,gravity,surfaces,ground,dt):
+    def update(self,gravity,friction,surfaces,ground,dt):
         if self.y_state == "move":
             self.vel.y += gravity * dt
             self.pos.y += self.vel.y * dt
@@ -42,22 +42,23 @@ class Ball(pygame.sprite.Sprite):
                     self.y_state = "rest"
 
         if self.x_state == "move":
+            # Update the position
             self.pos.x += self.vel.x
             self.rect.center = self.pos
 
+            # Apply friction on ground and stop ball is velocity if it is too low
+            if check_collision(self, ground):
+                if self.vel.x != 0:
+                    friction_effect = friction * dt
+                    if abs(self.vel.x) <= friction_effect:
+                        self.vel.x = 0
+                        self.x_state = "rest"
+                    else:
+                        self.vel.x -= friction_effect * (1 if self.vel.x > 0 else -1)
+
+            # Check if ball collides with walls and reverts the velocity
             if check_collision(self,surfaces):
                 self.vel.x = -self.vel.x
-
-            if check_collision(self,ground):
-                print("Collision")
-                if self.vel.x > 0: self.vel.x -= 0.2
-                elif self.vel.x < 0 : self.vel.x += 0.2
-                
-                if abs(self.vel.x) <= 0.5:
-                    self.vel.x = 0
-                    self.x_state = "rest"
-
-        print(self.vel.x)
 
         # Checks if ball is above the ground
         if not check_collision(self,ground): self.y_state = "move"
@@ -72,6 +73,7 @@ class Surface(pygame.sprite.Sprite):
 # Constants
 WIDTH, HEIGHT = 800, 400
 GRAVITY = 600
+FRICTION = 10
 
 screen = pygame.display.set_mode((WIDTH,HEIGHT))
 pygame.display.set_caption("Ball simulation")
@@ -107,7 +109,7 @@ def mouse_collision(sprite,pos):
 
     return False
 
-def move_balls(selected_ball):
+def select_ball(selected_ball):
     mouse_keys = pygame.mouse.get_pressed()
 
     # Selects a ball if no ball is selected
@@ -140,12 +142,12 @@ while True:
                 damping = randint(1,9)/10
                 Balls.add(Ball(x,y,radius,0.9))
 
-    selected_ball = move_balls(selected_ball) 
+    selected_ball = select_ball(selected_ball) 
     if selected_ball: selected_ball.move_ball(pygame.mouse.get_pos())
 
     screen.fill((100,100,100))
     Balls.draw(screen)
-    Balls.update(GRAVITY,Surfaces,Ground,dt)
+    Balls.update(GRAVITY,FRICTION,Surfaces,Ground,dt)
     Ground.draw(screen)
     Surfaces.draw(screen)
 
