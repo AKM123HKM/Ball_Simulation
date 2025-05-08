@@ -63,6 +63,10 @@ class Ball(pygame.sprite.Sprite):
         # Checks if ball is above the ground
         if not check_collision(self,ground): self.y_state = "move"
 
+    def draw(self, surface):
+        image_y_offset = 2  # Tweak if needed
+        surface.blit(self.image, (self.rect.x, self.rect.y - image_y_offset))
+
 class Surface(pygame.sprite.Sprite):
     def __init__(self,x,y,width,height):
         super().__init__()
@@ -146,7 +150,8 @@ while True:
     if selected_ball: selected_ball.move_ball(pygame.mouse.get_pos())
 
     screen.fill((100,100,100))
-    Balls.draw(screen)
+    for ball in Balls.sprites():
+        ball.draw(screen)
     Balls.update(GRAVITY,FRICTION,Surfaces,Ground,dt)
     Ground.draw(screen)
     Surfaces.draw(screen)
